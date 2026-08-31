@@ -1,0 +1,59 @@
+[
+    {
+        "id": "gpio_reader",
+        "type": "rpi-gpio in",
+        "z": "flow1",
+        "name": "GPIO17 - Лічильник",
+        "pin": "17",
+        "intype": "up",
+        "debounce": "25",
+        "read": false,
+        "x": 150,
+        "y": 100,
+        "wires": [["pulse_counter"]]
+    },
+    {
+        "id": "pulse_counter",
+        "type": "function",
+        "z": "flow1",
+        "name": "Підрахунок імпульсів",
+        "func": "var pulses = context.get('pulses') || 0;\npulses++;\ncontext.set('pulses', pulses);\n\nvar kwh = pulses * 0.001;\n\nmsg.payload = {\n    room_id: '101',\n    timestamp: new Date().toISOString(),\n    kwh_total: kwh,\n    kwh_hour: kwh,\n    pulse_count: pulses\n};\n\nreturn msg;",
+        "outputs": 1,
+        "x": 380,
+        "y": 100,
+        "wires": [["db_save", "mqtt_publish"]]
+    },
+    {
+        "id": "db_save",
+        "type": "mysql",
+        "z": "flow1",
+        "mydb": "hotel_db",
+        "name": "Зберегти в MariaDB",
+        "x": 620,
+        "y": 80,
+        "wires": [[]]
+    },
+    {
+        "id": "mqtt_publish",
+        "type": "mqtt out",
+        "z": "flow1",
+        "name": "MQTT Broker",
+        "topic": "hotel/room/101",
+        "qos": "1",
+        "retain": "false",
+        "broker": "mqtt_broker",
+        "x": 620,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "mqtt_broker",
+        "type": "mqtt-broker",
+        "z": "",
+        "name": "Hotel MQTT",
+        "broker": "broker.hivemq.com",
+        "port": "1883",
+        "clientid": "",
+        "usetls": false
+    }
+]
